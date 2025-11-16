@@ -5,5 +5,9 @@ app = Flask(__name__)
 def hello_geek():
     return '<h1>Hello from Flask & Docker</h2>'
 
+@app.route('/health')
+def health_check():
+    return 'OK'
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
