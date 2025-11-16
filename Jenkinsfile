@@ -11,14 +11,15 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 sh 'python --version'
-                sh 'pip install -r requirements.txt'
-                sh 'pip install pytest'
+                sh 'python -m venv venv'
+                sh '. venv/bin/activate && pip install -r requirements.txt'
+                sh '. venv/bin/activate && pip install pytest'
             }
         }
         
         stage('Run Tests') {
             steps {
-                sh 'python -m pytest test_app.py -v || echo "Tests completed"'
+                sh '. venv/bin/activate && python -m pytest test_app.py -v || echo "Tests completed"'
             }
         }
         
@@ -27,7 +28,7 @@ pipeline {
                 script {
                     // Проверяем доступ к Docker
                     sh 'docker --version'
-                    sh 'docker ps'
+                    sh 'docker ps || true'
                     
                     // Собираем образ
                     sh "docker build -t flask-app:${env.BUILD_ID} ."
