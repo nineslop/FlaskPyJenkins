@@ -8,10 +8,11 @@ pipeline {
             }
         }
         
-        stage('Install Dependencies') {
+        stage('Setup Python Environment') {
             steps {
                 sh 'python --version'
-                sh 'python -m venv venv'
+                sh 'sudo apt-get update && sudo apt-get install -y python3-venv || true'
+                sh 'python -m venv venv || python -m ensurepip --default-pip'
                 sh '. venv/bin/activate && pip install -r requirements.txt'
                 sh '. venv/bin/activate && pip install pytest'
             }
@@ -26,11 +27,6 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Проверяем доступ к Docker
-                    sh 'docker --version'
-                    sh 'docker ps || true'
-                    
-                    // Собираем образ
                     sh "docker build -t flask-app:${env.BUILD_ID} ."
                 }
             }
@@ -40,11 +36,8 @@ pipeline {
             steps {
                 script {
                     sh '''
-                    # Останавливаем старый контейнер если есть
                     docker stop flask-container || true
                     docker rm flask-container || true
-                    
-                    # Запускаем новый контейнер
                     docker run -d -p 5000:5000 --name flask-container flask-app:${BUILD_ID}
                     '''
                 }
@@ -67,7 +60,6 @@ pipeline {
         }
         success {
             echo 'Pipeline succeeded! Application is running on port 5000'
-            sh 'echo "Access the application at: http://localhost:5000"'
         }
         failure {
             echo 'Pipeline failed! Check the logs for details'
